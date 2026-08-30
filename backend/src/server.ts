@@ -3,6 +3,7 @@ dotenv.config();
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import router from "./routes";
+import authRoutes from "./routes/authRoute";
 
 
 const app: Application = express();
@@ -14,6 +15,7 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
 
 // Routes
 app.use("/api/v1", router);
+app.use("/api/v1/auth",authRoutes);
 
 // Start the Express server
 app.listen(PORT, () => {
