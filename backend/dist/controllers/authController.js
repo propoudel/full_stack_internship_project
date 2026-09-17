@@ -17,38 +17,32 @@ class AuthController {
         //Register
         this.register = (req, res) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const { name, email, password, phone, role } = req.body;
-                const user = yield authService.register({
-                    name,
-                    email,
-                    password,
-                    phone,
-                    role,
-                });
+                const { name, email, password, phone } = req.body;
+                const { user, token } = yield authService.register({ name, email, password, phone });
                 return res.status(201).json({
                     success: true,
-                    message: "Registration sucessful",
-                    data: user,
+                    message: "Registration successful",
+                    data: { user, token },
                 });
             }
             catch (error) {
                 const status = error.status || 500;
                 const message = error.message || "Something went wrong during registration";
-                return res.status(status).json({
-                    success: false,
-                    message,
-                });
+                return res.status(status).json({ success: false, message });
             }
         });
         // login 
         this.login = (req, res) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, password } = req.body;
-                const user = yield authService.login({ email, password });
+                const { user, token } = yield authService.login({ email, password });
                 return res.status(200).json({
                     success: true,
                     message: "Login sucessful",
-                    data: user,
+                    data: {
+                        user,
+                        token,
+                    },
                 });
             }
             catch (error) {
@@ -56,6 +50,25 @@ class AuthController {
                 const message = error.message || "Something went wrong during loging";
                 return res.status(status).json({
                     success: false,
+                    message,
+                });
+            }
+        });
+        // get /me
+        this.getCurrentUser = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.user.id;
+                const user = yield authService.getCurrentUser(userId);
+                return res.status(200).json({
+                    success: true,
+                    data: user,
+                });
+            }
+            catch (error) {
+                const status = error.status || 500;
+                const message = error.message || "Something went wrong";
+                return res.status(status).json({
+                    sucess: false,
                     message,
                 });
             }

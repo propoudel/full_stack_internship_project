@@ -16,7 +16,7 @@ model User{
   name String 
   email String @unique
   password String 
-  role Role @default(JobSeeker)
+  role Role @default(User)
   phone String @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -67,4 +67,5 @@ enum Role {
   JobSeeker
   Employer
   Admin
+  User
 }

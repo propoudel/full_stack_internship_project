@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const userRepository_1 = require("../repositories/userRepository");
+const jwtUtil_1 = require("../utils/jwtUtil");
 const userRepository = new userRepository_1.UserRepository();
 class AuthService {
     // handels new user registration
@@ -42,8 +43,27 @@ class AuthService {
                 email: data.email,
                 password: hashedPassword,
                 phone: data.phone,
-                role: data.role,
+                role: "User",
             });
+            // Generate token immediately — no separate login required
+            const token = (0, jwtUtil_1.generateToken)({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            });
+            const { password } = user, userWithoutPassword = __rest(user, ["password"]);
+            return {
+                user: userWithoutPassword,
+                token,
+            };
+        });
+    }
+    getCurrentUser(userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield userRepository.findById(userId);
+            if (!user) {
+                throw { status: 404, message: "User not found" };
+            }
             const { password } = user, userWithoutPassword = __rest(user, ["password"]);
             return userWithoutPassword;
         });
@@ -67,9 +87,18 @@ class AuthService {
                     message: "Invalid email or password"
                 };
             }
+            // Generate token
+            const token = (0, jwtUtil_1.generateToken)({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            });
             //remove password before returning
             const { password } = user, userWithoutPassword = __rest(user, ["password"]);
-            return userWithoutPassword;
+            return {
+                user: userWithoutPassword,
+                token,
+            };
         });
     }
 }
