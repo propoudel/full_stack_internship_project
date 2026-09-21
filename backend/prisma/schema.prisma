@@ -21,6 +21,8 @@ model User{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  company Company?
+
 }
 
 model Company{
@@ -36,6 +38,9 @@ model Company{
   companySize String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  owner User @relation(fields:[ownerId],references:[id])
+  ownerId Int @unique
 }
 
 model Job{
