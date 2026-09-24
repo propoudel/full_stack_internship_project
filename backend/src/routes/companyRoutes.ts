@@ -13,9 +13,9 @@ router.get("/",companyController.getAllCompanies);
 router.get("/:id",companyController.getCompanyById);
 
 // protected routes
-router.post("/",authMiddleware,authorizeRoles("Employer"),validate(createCompanySchema),companyController.createCompany);
-router.get("/me/company",authMiddleware,authorizeRoles("Employer"),companyController.getMyCompany);
-router.put("/:id",authMiddleware,authorizeRoles("Employer"),validate(updateCompanySchema),companyController.updateCompany);
-router.delete("/:id",authMiddleware,authorizeRoles("Employer"),companyController.deleteCompany);
+router.post("/",authMiddleware,validate(createCompanySchema),companyController.createCompany);
+router.get("/me/company",authMiddleware,companyController.getMyCompany);
+router.put("/:id",authMiddleware,validate(updateCompanySchema),companyController.updateCompany);
+router.delete("/:id",authMiddleware,companyController.deleteCompany);
 
 export default router;

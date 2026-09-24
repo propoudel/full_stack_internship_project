@@ -10,11 +10,19 @@ export class CompanyController {
     createCompany = async (req: AuthRequest, res: Response): Promise<Response> => {
         try {
             const ownerId = req.user!.id;
-            const company = await companyService.createCompany(ownerId, req.body);
+            const ownerRole = req.user!.role;
+            const ownerEmail = req.user!.email;
+
+            const {company, warning} = await companyService.createCompany(
+                ownerId,
+                ownerRole,
+                ownerEmail,
+                req.body);
 
             return res.status(201).json({
                 success: true,
                 message: "Company created successfully",
+                warning,
                 data: company
             });
         } catch (error: any) {

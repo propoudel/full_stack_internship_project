@@ -30,6 +30,11 @@ class UserRepository {
             return prisma_1.prisma.user.findUnique({ where: { email } });
         });
     }
+    findByVerificationToken(token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return prisma_1.prisma.user.findFirst({ where: { verificationToken: token } });
+        });
+    }
     // Create a new User in the database
     create(data) {
         return __awaiter(this, void 0, void 0, function* () {

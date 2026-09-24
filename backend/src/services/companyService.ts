@@ -1,16 +1,30 @@
 import { CompanyRepository } from "../repositories/companyRepository";
 import { Company } from "@prisma/client";
 import {CreateCompanyInput, UpdateCompanyInput} from "../validators/companyValidator";
+import { sendProfileReminderEmail } from "../utils/emailUtils";
 
 const companyRepository = new CompanyRepository();
 
 export class CompanyService{
-    public async createCompany(ownerId:number, data:CreateCompanyInput): Promise<Company>{
+    public async createCompany(
+        ownerId:number,
+        ownerRole:String,
+        ownerEmail:string,
+        data:CreateCompanyInput): Promise<{company:Company; warning?:string}>{
         const existingCompany = await companyRepository.findByOwnerID(ownerId);
         if(existingCompany){
             throw {status:409, message:"User already has a company"};
         }
-        return companyRepository.create({...data, ownerId});
+
+        const company = await companyRepository.create({...data, ownerId});
+
+        let warning:string | undefined;
+
+        if(ownerRole === "User"){
+            warning ="You created a company. Update your profile as a Employeer."
+            await sendProfileReminderEmail(ownerEmail);
+        }
+        return {company, warning};
     }
 
     //get the logged in user's company

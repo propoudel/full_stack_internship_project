@@ -27,35 +27,55 @@ exports.AuthService = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const userRepository_1 = require("../repositories/userRepository");
 const jwtUtil_1 = require("../utils/jwtUtil");
+const refreshTokenRepository_1 = require("../repositories/refreshTokenRepository");
+const crypto_1 = __importDefault(require("crypto"));
+const emailUtils_1 = require("../utils/emailUtils");
 const userRepository = new userRepository_1.UserRepository();
+const refreshTokenRepository = new refreshTokenRepository_1.RefreshTokenRepository();
 class AuthService {
     // handels new user registration
     register(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const existingUser = yield userRepository.findByEmail(data.email);
             if (existingUser) {
-                throw { status: 409, message: "Email already registered" };
+                if (existingUser.isVerified) {
+                    throw { status: 409, message: "Email already registered" };
+                }
+                //for existing email but not verified
+                const hashedPassword = yield bcrypt_1.default.hash(data.password, 10);
+                const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
+                const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                const updatedUser = yield userRepository.update(existingUser.id, {
+                    name: data.name,
+                    password: hashedPassword,
+                    phone: data.phone,
+                    verificationToken,
+                    verificationTokenExpiry,
+                });
+                yield (0, emailUtils_1.sendVerificationEmail)(updatedUser.email, updatedUser.name, verificationToken);
+                const { password, verificationToken: _vt, verificationTokenExpiry: _vte } = updatedUser, safeUser = __rest(updatedUser, ["password", "verificationToken", "verificationTokenExpiry"]);
+                return safeUser;
             }
+            //Brand new email- normal registration flow
             // hash password
             const hashedPassword = yield bcrypt_1.default.hash(data.password, 10);
+            //Generating ramdom verification code
+            const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
+            const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
             const user = yield userRepository.create({
                 name: data.name,
                 email: data.email,
                 password: hashedPassword,
                 phone: data.phone,
                 role: "User",
+                isVerified: false,
+                verificationToken,
+                verificationTokenExpiry,
             });
-            // Generate token immediately — no separate login required
-            const token = (0, jwtUtil_1.generateToken)({
-                id: user.id,
-                email: user.email,
-                role: user.role,
-            });
-            const { password } = user, userWithoutPassword = __rest(user, ["password"]);
-            return {
-                user: userWithoutPassword,
-                token,
-            };
+            // sending verification email
+            yield (0, emailUtils_1.sendVerificationEmail)(user.email, user.name, verificationToken);
+            const { password, verificationToken: _vt, verificationTokenExpiry: _vte } = user, safeUser = __rest(user, ["password", "verificationToken", "verificationTokenExpiry"]);
+            return safeUser;
         });
     }
     getCurrentUser(userId) {
@@ -66,6 +86,48 @@ class AuthService {
             }
             const { password } = user, userWithoutPassword = __rest(user, ["password"]);
             return userWithoutPassword;
+        });
+    }
+    // verify email
+    verifyEmail(token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Received token:", token);
+            const user = yield userRepository.findByVerificationToken(token);
+            console.log("Found user:", user);
+            if (!user) {
+                throw { status: 400, message: "Invalid or expired verification link" };
+            }
+            if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
+                throw { status: 400, message: "Verification link has expired. Please request a new one." };
+            }
+            yield userRepository.update(user.id, {
+                isVerified: true,
+                verificationToken: null,
+                verificationTokenExpiry: null,
+            });
+        });
+    }
+    //refrence Token
+    refreshAccessToken(refreshToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const storedToken = yield refreshTokenRepository.findByToken(refreshToken);
+            if (!storedToken) {
+                throw { status: 401, message: "Invalid refresh token" };
+            }
+            if (storedToken.expiresAt < new Date()) {
+                yield refreshTokenRepository.deleteByToken(refreshToken);
+                throw { status: 401, message: "Refresh token expired. Please log in again." };
+            }
+            const user = yield userRepository.findById(storedToken.userId);
+            if (!user) {
+                throw { status: 401, message: "User not found" };
+            }
+            const newAccessToken = (0, jwtUtil_1.generateAccessToken)({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            });
+            return newAccessToken;
         });
     }
     // login
@@ -87,18 +149,41 @@ class AuthService {
                     message: "Invalid email or password"
                 };
             }
-            // Generate token
-            const token = (0, jwtUtil_1.generateToken)({
+            //blocking email if not verified
+            if (!user.isVerified) {
+                throw {
+                    status: 403,
+                    message: `Please verify your email before logging in. Check the inbox for ${user.email}.`,
+                };
+            }
+            // Generate Accesstoken
+            const accessToken = (0, jwtUtil_1.generateAccessToken)({
                 id: user.id,
                 email: user.email,
                 role: user.role,
             });
+            const refreshToken = (0, jwtUtil_1.generateRefreshToken)();
+            const expiresAt = new Date(Date.now() + jwtUtil_1.REFRESH_TOKEN_EXPIRY_MS);
+            yield refreshTokenRepository.create({
+                token: refreshToken,
+                userId: user.id,
+                expiresAt,
+            });
             //remove password before returning
-            const { password } = user, userWithoutPassword = __rest(user, ["password"]);
+            const { password, verificationToken, verificationTokenExpiry } = user, safeUser = __rest(user, ["password", "verificationToken", "verificationTokenExpiry"]);
             return {
-                user: userWithoutPassword,
-                token,
+                user: safeUser,
+                accessToken,
+                refreshToken,
             };
+        });
+    }
+    // logout
+    logout(refreshToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (refreshToken) {
+                yield refreshTokenRepository.deleteByToken(refreshToken);
+            }
         });
     }
 }

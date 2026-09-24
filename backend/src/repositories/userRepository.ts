@@ -16,6 +16,9 @@ export class UserRepository {
     public async findByEmail(email: string): Promise<User | null> {
         return prisma.user.findUnique({ where: { email } });
     }
+    public async findByVerificationToken(token: string): Promise<User | null> {
+        return prisma.user.findFirst({ where: { verificationToken: token } });
+    }
 
     // Create a new User in the database
     public async create(data: {
@@ -24,6 +27,9 @@ export class UserRepository {
         password: string;
         phone: string;
         role?: Role;
+        isVerified?: boolean,
+        verificationToken?: string,
+        verificationTokenExpiry?: Date,
     }): Promise<User> {
         return prisma.user.create({ data });
     }
@@ -36,6 +42,10 @@ export class UserRepository {
             email: string;
             password: string;
             phone: string;
+            role: Role;
+            isVerified: boolean;
+            verificationToken: string | null;
+            verificationTokenExpiry: Date | null;
         }>
     ): Promise<User> {
         return prisma.user.update({

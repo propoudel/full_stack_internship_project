@@ -10,5 +10,8 @@ const authController = new authController_1.AuthController;
 //post 
 router.post("/register", (0, validateMiddleware_1.validate)(authvalidator_1.registerSchema), authController.register);
 router.post("/login", (0, validateMiddleware_1.validate)(authvalidator_1.loginSchema), authController.login);
+router.post("/logout", authController.logout);
 router.get("/me", authMiddleware_1.authMiddleware, authController.getCurrentUser);
+router.get("/verify-email", authController.verifyEmail);
+router.post("/refresh", authController.refresh);
 exports.default = router;

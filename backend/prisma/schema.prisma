@@ -11,18 +11,31 @@ datasource db {
   provider = "postgresql"
 }
 
-model User{
+model User {
   id Int @id @default(autoincrement()) 
   name String 
   email String @unique
   password String 
   role Role @default(User)
   phone String @unique
+  isVerified Boolean @default(false)
+  verificationToken String?
+  verificationTokenExpiry DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  refreshToken RefreshToken[]
+  
 
   company Company?
+}
 
+model RefreshToken{
+  id Int @id @default(autoincrement())
+  token String @unique
+  userId Int
+  user User @relation(fields: [userId], references:[id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Company{

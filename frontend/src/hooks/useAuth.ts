@@ -19,7 +19,7 @@ export function useAuth(){
         setLoading(true);
         try{
             await api.post("/auth/register", data);
-            router.push("/dashboard");
+            router.push("/login?registered=true");
         }catch(error:any){
             setError(error.response?.data?.message || "Registration failed. Please try again.");
         }finally{
