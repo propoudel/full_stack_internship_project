@@ -3,9 +3,10 @@ dotenv.config();
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import router from "./routes";
-import authRoutes from "./routes/authRoute";
+import authRoute from "./routes/authRoute";
 import cookieParser from "cookie-parser";
-import companyRoutes from "./routes/companyRoutes";
+import companyRoute from "./routes/companyRoute";
+import jobRoute from "./routes/jobRoute";
 
 const app: Application = express();
 
@@ -20,8 +21,9 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
 
 // Routes
 app.use("/api/v1", router);
-app.use("/api/v1/auth",authRoutes);
-app.use("/api/v1/companies",companyRoutes)
+app.use("/api/v1/auth",authRoute);
+app.use("/api/v1/companies",companyRoute);
+app.use("/api/v1/jobs",jobRoute);
 
 // Start the Express server
 app.listen(PORT, () => {
