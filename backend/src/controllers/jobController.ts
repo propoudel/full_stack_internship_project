@@ -25,12 +25,42 @@ export class JobController {
     // Get jobs
     getAllJobs = async (req: AuthRequest, res: Response): Promise<Response> => {
         try {
-            const jobs = await jobService.getAllJobs();
-            return res.status(200).json({ sucess: true, data: jobs });
+            const {
+                search,
+                location,
+                employmentType,
+                experienceLevel,
+                sortBy,
+                order,
+                page,
+                limit,
+            } = req.query;
+
+            const result = await jobService.getAllJobs({
+                search: search as string,
+                location: location as string,
+                employmentType: employmentType as string,
+                experienceLevel: experienceLevel as string,
+                sortBy: sortBy as string,
+                order: order as "asc" | "desc",
+                page: page ? Number(page) : undefined,
+                limit: limit ? Number(limit) : undefined,
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: result.jobs,
+                pagination: {
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages,
+                },
+            });
         } catch (error: any) {
             const status = error.status || 500;
             const message = error.message || "Something went wrong";
-            return res.status(status).json({ sucess: false, message });
+            return res.status(status).json({ success: false, message });
         }
     };
 

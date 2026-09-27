@@ -24,8 +24,24 @@ export class JobService {
     }
 
     // get all job
-    public async getAllJobs(): Promise<Job[]> {
-        return jobRepository.findAllOpen();
+    public async getAllJobs(filters: {
+        search?: string;
+        location?: string;
+        employmentType?: string;
+        experienceLevel?: string;
+        sortBy?: string;
+        order?: "asc" | "desc";
+        page?: number;
+        limit?: number;
+    }): Promise<{ jobs: Job[]; total: number; page: number; limit: number; totalPages: number }> {
+
+        const { jobs, total } = await jobRepository.findAllOpen(filters);
+
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+        const totalPages = Math.ceil(total / limit);
+
+        return { jobs, total, page, limit, totalPages };
     }
 
     public async getJobById(id: number): Promise<Job> {
