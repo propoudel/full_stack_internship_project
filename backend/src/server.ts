@@ -7,6 +7,7 @@ import authRoute from "./routes/authRoute";
 import cookieParser from "cookie-parser";
 import companyRoute from "./routes/companyRoute";
 import jobRoute from "./routes/jobRoute";
+import applicationRoute from "./routes/applicationRoute";
 
 const app: Application = express();
 
@@ -24,6 +25,7 @@ app.use("/api/v1", router);
 app.use("/api/v1/auth",authRoute);
 app.use("/api/v1/companies",companyRoute);
 app.use("/api/v1/jobs",jobRoute);
+app.use("/api/v1/applications",applicationRoute);
 
 // Start the Express server
 app.listen(PORT, () => {

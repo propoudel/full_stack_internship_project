@@ -27,6 +27,8 @@ model User {
   
 
   company Company?
+
+  applications Application[]
 }
 
 model RefreshToken{
@@ -75,7 +77,7 @@ model Job{
   updatedAt DateTime @updatedAt
 
   company Company @relation(fields: [companyId], references:[id])
-
+  applications Application[]
 }
 
 enum EmploymentType {
@@ -97,4 +99,28 @@ enum JobStatus{
   Draft
   Open
   Closed
+}
+
+model Application{
+  id Int @id @default(autoincrement())
+  resumeUrl String 
+  Experience String?
+  status ApplicationStatus @default(Pending)
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applicantId Int
+  applicant User @relation(fields:[applicantId], references:[id])
+
+  jobId Int
+  job Job @relation(fields:[jobId], references:[id])
+
+  @@unique([applicantId,jobId])
+}
+
+enum ApplicationStatus{
+  Pending
+  Reviewed
+  Accepted
+  Rejected
 }

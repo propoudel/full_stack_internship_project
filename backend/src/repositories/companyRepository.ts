@@ -4,7 +4,7 @@ import {prisma} from "../config/prisma";
 export class CompanyRepository{
 
     //Find a company by its owner's user id
-    public async findByOwnerID(ownerId:number): Promise<Company | null>{
+    public async findByOwnerId(ownerId:number): Promise<Company | null>{
         return prisma.company.findUnique({where:{ownerId} });
     }
 

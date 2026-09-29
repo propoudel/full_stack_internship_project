@@ -8,7 +8,7 @@ const companyRepository = new CompanyRepository();
 
 export class JobService {
     public async createJob(userId: number, data: CreateJobInput): Promise<Job> {
-        const company = await companyRepository.findByOwnerID(userId)
+        const company = await companyRepository.findByOwnerId(userId)
 
         if (!company) {
             throw {
@@ -53,7 +53,7 @@ export class JobService {
     }
 
     public async getMyJobs(userId: number): Promise<Job[]> {
-        const company = await companyRepository.findByOwnerID(userId);
+        const company = await companyRepository.findByOwnerId(userId);
 
         if (!company) {
             throw {
@@ -72,7 +72,7 @@ export class JobService {
                 message: "No job found",
             }
         }
-        const company = await companyRepository.findByOwnerID(userId);
+        const company = await companyRepository.findByOwnerId(userId);
         if (!company || company.id !== job.companyId) {
             throw {
                 status: 403,
@@ -91,7 +91,7 @@ export class JobService {
                 message: "Job not found"
             };
         }
-        const company = await companyRepository.findByOwnerID(userId);
+        const company = await companyRepository.findByOwnerId(userId);
         if (!company) {
             throw {
                 status: 403,
@@ -109,7 +109,7 @@ export class JobService {
             throw { status: 404, message: "Job not found" };
         }
 
-        const company = await companyRepository.findByOwnerID(userId);
+        const company = await companyRepository.findByOwnerId(userId);
         if (!company || company.id !== job.companyId) {
             throw { status: 403, message: "You do not have permission to deactivate this job" };
         }
@@ -129,7 +129,7 @@ export class JobService {
             throw { status: 404, message: "Job not found" };
         }
 
-        const company = await companyRepository.findByOwnerID(userId);
+        const company = await companyRepository.findByOwnerId(userId);
         if (!company || company.id !== job.companyId) {
             throw { status: 403, message: "You do not have permission to publish this job" };
         }

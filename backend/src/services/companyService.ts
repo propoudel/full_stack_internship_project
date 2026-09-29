@@ -11,7 +11,7 @@ export class CompanyService{
         ownerRole:String,
         ownerEmail:string,
         data:CreateCompanyInput): Promise<{company:Company; warning?:string}>{
-        const existingCompany = await companyRepository.findByOwnerID(ownerId);
+        const existingCompany = await companyRepository.findByOwnerId(ownerId);
         if(existingCompany){
             throw {status:409, message:"User already has a company"};
         }
@@ -29,7 +29,7 @@ export class CompanyService{
 
     //get the logged in user's company
     public async getMyCompany(ownerId:number): Promise<Company>{
-        const company = await companyRepository.findByOwnerID(ownerId);
+        const company = await companyRepository.findByOwnerId(ownerId);
         if(!company){
             throw {status:404, message:"Company not found"};
         }
