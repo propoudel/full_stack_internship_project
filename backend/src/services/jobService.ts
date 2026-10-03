@@ -141,4 +141,23 @@ export class JobService {
         return jobRepository.update(jobId, { status: "Open" });
     }
 
+    public async reopenJob(userId: number, jobId: number): Promise<Job> {
+        const job = await jobRepository.findById(jobId);
+
+        if (!job) {
+            throw { status: 404, message: "Job not found" };
+        }
+
+        const company = await companyRepository.findByOwnerId(userId);
+        if (!company || company.id !== job.companyId) {
+            throw { status: 403, message: "You do not have permission to reopen this job" };
+        }
+
+        if (job.status !== "Closed") {
+            throw { status: 400, message: "Only closed jobs can be reopened" };
+        }
+
+        return jobRepository.update(jobId, { status: "Open" });
+    }
+
 }

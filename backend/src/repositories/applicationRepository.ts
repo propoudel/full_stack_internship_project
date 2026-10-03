@@ -4,7 +4,7 @@ import { Application, ApplicationStatus } from "@prisma/client";
 export class ApplicationRepository{
     public async create(data:{
         resumeUrl: string;
-        experience?:string;
+        Experience?:string;
         applicantId:number;
         jobId:number;
     }):Promise<Application>{

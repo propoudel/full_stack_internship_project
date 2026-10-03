@@ -37,33 +37,28 @@ export default function VerifyEmailPage() {
     verify();
   }, [token]);
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-950">
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-gray-900 p-8 text-center">
-        {status === "loading" && (
-          <p className="text-gray-300">Verifying your email...</p>
-        )}
+ return (
+  <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 to-emerald-50 p-4">
+    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 text-center shadow-md">
+      {status === "loading" && <p className="text-gray-500">Verifying your email...</p>}
 
-        {status === "success" && (
-          <>
-            <h1 className="text-2xl font-bold text-green-400">✅ Verified!</h1>
-            <p className="text-gray-300">{message}</p>
-            <Link
-              href="/login"
-              className="mt-4 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              Go to Login
-            </Link>
-          </>
-        )}
+      {status === "success" && (
+        <>
+          <h1 className="text-2xl font-bold text-emerald-600">✅ Verified!</h1>
+          <p className="text-gray-600">{message}</p>
+          <Link href="/login" className="mt-4 inline-block rounded bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600">
+            Go to Login
+          </Link>
+        </>
+      )}
 
-        {status === "error" && (
-          <>
-            <h1 className="text-2xl font-bold text-red-400">❌ Verification Failed</h1>
-            <p className="text-gray-300">{message}</p>
-          </>
-        )}
-      </div>
-    </main>
-  );
+      {status === "error" && (
+        <>
+          <h1 className="text-2xl font-bold text-red-600">❌ Verification Failed</h1>
+          <p className="text-gray-600">{message}</p>
+        </>
+      )}
+    </div>
+  </main>
+);
 }

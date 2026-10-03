@@ -20,6 +20,7 @@ router.get("/me/jobs",authMiddleware,jobController.getMyJobs)
 router.put("/:id",authMiddleware,validate(updateJobSchema),jobController.updateJob);
 router.delete("/:id", authMiddleware,validate(updateJobSchema),jobController.deleteJob);
 router.patch("/:id/publish", authMiddleware, jobController.publishJob);
+router.patch("/:id/reopen", authMiddleware, jobController.reopenJob);
 router.patch("/:id/deactivate", authMiddleware, jobController.deactivateJob);
 router.post("/:jobId/applications",authMiddleware,validate(applyToJobSchema),applicationController.applyToJob);
 router.get("/:jobId/applications",authMiddleware,applicationController.getApplicationsForJob);

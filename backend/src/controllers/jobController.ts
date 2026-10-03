@@ -90,6 +90,25 @@ export class JobController {
             return res.status(status).json({ sucess: false, message });
         }
     };
+    //reponse job 
+    reopenJob = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const userId = req.user!.id;
+            const jobId = Number(req.params.id);
+
+            const job = await jobService.reopenJob(userId, jobId);
+
+            return res.status(200).json({
+                success: true,
+                message: "Job reopened successfully",
+                data: job,
+            });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
 
     // update the job
     updateJob = async (req: AuthRequest, res: Response): Promise<Response> => {

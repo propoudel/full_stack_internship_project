@@ -32,7 +32,7 @@ export class ApplicationService {
 
         return applicationRepository.create({
             resumeUrl: data.resumeUrl,
-            experience: data.experience,
+            Experience: data.Experience,
             applicantId,
             jobId,
         });
