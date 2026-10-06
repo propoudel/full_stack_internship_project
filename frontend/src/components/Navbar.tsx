@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bookmark,
 } from "lucide-react";
 import api from "../lib/axios";
 
@@ -56,6 +57,7 @@ export default function Navbar() {
     { href: "/company/me", label: "My Company", icon: Building2 },
     { href: "/jobs/me", label: "My Jobs", icon: FileText },
     { href: "/applications/me", label: "Applications", icon: ClipboardList },
+    { href: "/saved-jobs", label: "Saved Jobs", icon: Bookmark },
   ];
 
   const isActive = (href: string) =>

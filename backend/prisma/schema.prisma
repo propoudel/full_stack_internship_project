@@ -29,6 +29,8 @@ model User {
   company Company?
 
   applications Application[]
+
+  savedJobs SavedJob[]
 }
 
 model RefreshToken{
@@ -78,6 +80,7 @@ model Job{
 
   company Company @relation(fields: [companyId], references:[id])
   applications Application[]
+  savedBy SavedJob[]
 }
 
 enum EmploymentType {
@@ -123,4 +126,15 @@ enum ApplicationStatus{
   Reviewed
   Accepted
   Rejected
+}
+
+model SavedJob{
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation (fields:[userId], references:[id])
+  jobId Int
+  job Job @relation(fields:[jobId], references:[id])
+  savedAt DateTime @default(now())
+
+  @@unique([userId,jobId])
 }

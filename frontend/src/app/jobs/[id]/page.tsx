@@ -10,6 +10,8 @@ export default function JobDetailsPage() {
 
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingJob, setSavingJob] = useState(false);
 
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [resumeUrl, setResumeUrl] = useState("");
@@ -23,6 +25,14 @@ export default function JobDetailsPage() {
       try {
         const res = await api.get(`/jobs/${id}`);
         setJob(res.data.data);
+
+        //Checking if the job is already saved
+        try{
+          const savedRes = await api.get(`/saved-jobs`);
+          const saved = savedRes.data.data.some((savedJob: any) => savedJob.jobId === Number(id));
+          setIsSaved(saved);
+        }catch{
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -32,6 +42,27 @@ export default function JobDetailsPage() {
 
     fetchJob();
   }, [id]);
+
+  const handleToggleSave = async () => {
+  setSavingJob(true);
+  try {
+    if (isSaved) {
+      await api.delete(`/jobs/${id}/save`);
+      setIsSaved(false);
+    } else {
+      await api.post(`/jobs/${id}/save`);
+      setIsSaved(true);
+    }
+  } catch (err: any) {
+    if (err.response?.status === 401) {
+      router.push("/login");
+      return;
+    }
+    alert(err.response?.data?.message || "Something went wrong");
+  } finally {
+    setSavingJob(false);
+  }
+};
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +123,17 @@ export default function JobDetailsPage() {
             Apply Now
           </button>
         )}
+        <button
+    onClick={handleToggleSave}
+    disabled={savingJob}
+    className={`rounded px-5 py-2 font-medium transition disabled:opacity-50 ${
+      isSaved
+        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+        : "bg-sky-100 text-sky-700 hover:bg-sky-200"
+    }`}
+  >
+    {isSaved ? "★ Saved" : "☆ Save Job"}
+  </button>
 
         {showApplyForm && (
           <form onSubmit={handleApply} className="mt-6 space-y-3 rounded-lg bg-sky-50 p-4">
