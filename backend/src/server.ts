@@ -9,6 +9,7 @@ import companyRoute from "./routes/companyRoute";
 import jobRoute from "./routes/jobRoute";
 import applicationRoute from "./routes/applicationRoute";
 import savedJobRoute from "./routes/savedJobRoutes";
+import adminRoute from "./routes/adminRoute";
 
 const app: Application = express();
 
@@ -28,6 +29,7 @@ app.use("/api/v1/companies",companyRoute);
 app.use("/api/v1/jobs",jobRoute);
 app.use("/api/v1/applications",applicationRoute);
 app.use("/api/v1/saved-jobs",savedJobRoute);
+app.use("/api/v1/admin",adminRoute);
 
 // Start the Express server
 app.listen(PORT, () => {

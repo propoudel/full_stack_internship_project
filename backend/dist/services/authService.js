@@ -156,6 +156,11 @@ class AuthService {
                     message: `Please verify your email before logging in. Check the inbox for ${user.email}.`,
                 };
             }
+            if (!user.isActive) {
+                throw {
+                    status: 401, message: "Your account has been deactivates.Please contact support."
+                };
+            }
             // Generate Accesstoken
             const accessToken = (0, jwtUtil_1.generateAccessToken)({
                 id: user.id,

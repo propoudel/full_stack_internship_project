@@ -19,18 +19,17 @@ model User {
   role Role @default(User)
   phone String @unique
   isVerified Boolean @default(false)
+  isActive Boolean @default(true)
   verificationToken String?
   verificationTokenExpiry DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  refreshToken RefreshToken[]
-  
 
   company Company?
-
+  refreshToken RefreshToken[]
   applications Application[]
-
   savedJobs SavedJob[]
+  
 }
 
 model RefreshToken{

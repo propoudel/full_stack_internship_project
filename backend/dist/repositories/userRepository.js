@@ -11,6 +11,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
 const prisma_1 = require("../config/prisma");
+const safeUserSelect = {
+    id: true,
+    name: true,
+    email: true,
+    role: true,
+    phone: true,
+    isVerified: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+};
 class UserRepository {
     // Get all users from the database
     findAll() {
@@ -54,6 +65,39 @@ class UserRepository {
     delete(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return prisma_1.prisma.user.delete({ where: { id } });
+        });
+    }
+    // Get all users for admin with optional filters
+    findAllForAdmin(filters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { search, role, isActive, page = 1, limit = 10 } = filters;
+            const where = {};
+            if (search) {
+                where.OR = [
+                    { name: { contains: search, mode: "insensitive" } },
+                    { email: { contains: search, mode: "insensitive" } },
+                ];
+            }
+            if (role)
+                where.role = role;
+            if (isActive !== undefined)
+                where.isActive = isActive;
+            const [users, total] = yield Promise.all([
+                prisma_1.prisma.user.findMany({
+                    where,
+                    select: safeUserSelect,
+                    orderBy: { createdAt: "desc" },
+                    skip: (page - 1) * limit,
+                    take: limit,
+                }),
+                prisma_1.prisma.user.count({ where }),
+            ]);
+            return { users, total };
+        });
+    }
+    findByIdForAdmin(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return prisma_1.prisma.user.findUnique({ where: { id }, select: safeUserSelect });
         });
     }
 }

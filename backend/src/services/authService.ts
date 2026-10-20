@@ -165,6 +165,11 @@ export class AuthService {
             };
         }
 
+        if(!user.isActive){
+            throw{
+                status:401, message:"Your account has been deactivates.Please contact support."
+            };
+        }
 
         // Generate Accesstoken
 

@@ -14,6 +14,7 @@ const companyRoute_1 = __importDefault(require("./routes/companyRoute"));
 const jobRoute_1 = __importDefault(require("./routes/jobRoute"));
 const applicationRoute_1 = __importDefault(require("./routes/applicationRoute"));
 const savedJobRoutes_1 = __importDefault(require("./routes/savedJobRoutes"));
+const adminRoute_1 = __importDefault(require("./routes/adminRoute"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: "http://localhost:3000",
@@ -29,6 +30,7 @@ app.use("/api/v1/companies", companyRoute_1.default);
 app.use("/api/v1/jobs", jobRoute_1.default);
 app.use("/api/v1/applications", applicationRoute_1.default);
 app.use("/api/v1/saved-jobs", savedJobRoutes_1.default);
+app.use("/api/v1/admin", adminRoute_1.default);
 // Start the Express server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
