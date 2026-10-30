@@ -101,6 +101,7 @@ enum JobStatus{
   Draft
   Open
   Closed
+  Suspended
 }
 
 model Application{

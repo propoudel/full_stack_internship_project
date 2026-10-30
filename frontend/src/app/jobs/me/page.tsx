@@ -50,6 +50,7 @@ export default function MyJobsPage() {
     Draft: "bg-amber-100 text-amber-700",
     Open: "bg-emerald-100 text-emerald-700",
     Closed: "bg-gray-200 text-gray-600",
+    Suspended: "bg-red-100 text-red-700", // ← add
   };
 
   return (
@@ -76,6 +77,12 @@ export default function MyJobsPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-gray-500">{job.location} · {job.employmentType}</p>
+              {job.status === "Suspended" && (
+                <p className="mt-2 rounded bg-red-50 p-2 text-sm text-red-600">
+                  This job was suspended by an administrator and is hidden from the public. It cannot be
+                  reopened from your account.
+                </p>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {job.status === "Draft" && (

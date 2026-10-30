@@ -3,7 +3,7 @@ import { AdminService } from "../services/adminService";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import { Role } from "@prisma/client";
 const adminService = new AdminService();
-
+import { JobStatus, ApplicationStatus } from "@prisma/client";
 export class AdminController {
     getStats = async (req: AuthRequest, res: Response): Promise<Response> => {
         try {
@@ -171,4 +171,125 @@ export class AdminController {
         }
     };
 
+    // GET /admin/jobs
+    getJobs = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const { search, status, page, limit } = req.query;
+
+            const validStatuses = ["Draft", "Open", "Closed", "Suspended"];
+            if (status && !validStatuses.includes(status as string)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid status. Use one of: ${validStatuses.join(", ")}`,
+                });
+            }
+
+            const result = await adminService.getJobs({
+                search: search as string,
+                status: status as JobStatus,
+                page: page ? Number(page) : undefined,
+                limit: limit ? Number(limit) : undefined,
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: result.jobs,
+                pagination: {
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages,
+                },
+            });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
+
+    // GET /admin/jobs/:id
+    getJobById = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const job = await adminService.getJobById(Number(req.params.id));
+            return res.status(200).json({ success: true, data: job });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
+
+    // PATCH /admin/jobs/:id/status
+    updateJobStatus = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const job = await adminService.updateJobStatus(Number(req.params.id), req.body.status);
+
+            return res.status(200).json({
+                success: true,
+                message: req.body.status === "Suspended" ? "Job suspended successfully" : "Job restored successfully",
+                data: job,
+            });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
+
+    // DELETE /admin/jobs/:id
+    deleteJob = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const result = await adminService.deleteJob(Number(req.params.id));
+
+            return res.status(200).json({
+                success: true,
+                message: "Job deleted successfully",
+                data: result, // { deletedApplications, deletedSavedJobs }
+            });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
+
+    // for applications
+    // GET /admin/applications
+    getApplications = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const { search, status, page, limit } = req.query;
+
+            const validStatuses = ["Pending", "Reviewed", "Accepted", "Rejected"];
+            if (status && !validStatuses.includes(status as string)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid status. Use one of: ${validStatuses.join(", ")}`,
+                });
+            }
+
+            const result = await adminService.getApplications({
+                search: search as string,
+                status: status as ApplicationStatus,
+                page: page ? Number(page) : undefined,
+                limit: limit ? Number(limit) : undefined,
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: result.applications,
+                statusCounts: result.statusCounts,
+                pagination: {
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages,
+                },
+            });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
 }

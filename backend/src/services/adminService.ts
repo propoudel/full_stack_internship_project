@@ -1,13 +1,17 @@
 import { prisma } from "../config/prisma";
-import { User, Role } from "@prisma/client";
+import { User, Role, JobStatus, ApplicationStatus } from "@prisma/client";
 import { UserRepository } from "../repositories/userRepository";
 import { RefreshTokenRepository } from "../repositories/refreshTokenRepository";
 import { CompanyRepository } from "../repositories/companyRepository";
 import { UpdateCompanyInput } from "../validators/companyValidator";
+import { JobRepository } from "../repositories/jobRepository";
+import { ApplicationRepository } from "../repositories/applicationRepository";
 
 const companyRepository = new CompanyRepository();
 const userRepository = new UserRepository();
 const refreshTokenRepository = new RefreshTokenRepository();
+const jobRepository = new JobRepository();
+const applicationRepository = new ApplicationRepository();
 
 export class AdminService {
     public async getPlatformStats() {
@@ -160,5 +164,77 @@ export class AdminService {
         await companyRepository.deleteWithRelations(companyId);
 
         return { deletedJobs, deletedApplications };
+    }
+
+    public async getJobs(filters:{
+        search?:string;
+        status?: JobStatus;
+        page?:number;
+        limit?:number;
+    }){
+        const { jobs, total } = await jobRepository.findAllForAdmin(filters);
+
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+
+        return { jobs, total, page, limit, totalPages: Math.ceil(total / limit) };
+    }
+
+    public async getJobById(jobId:number){
+        const job = await jobRepository.findByIdWithCounts(jobId);
+
+        if (!job) {
+            throw { status: 404, message: "Job not found" };
+        }
+
+        return job;
+    
+    }
+
+    public async updateJobStatus(jobId:number, status: "Suspended" | "Open"){
+        const job = await jobRepository.findById(jobId);
+
+        if (!job) {
+            throw { status: 404, message: "Job not found" };
+        }
+
+    if(status === "Suspended" && job.status!=="Open"){
+        throw{ status:400, message:"Only open jobs can be suspended"}
+    }   
+    
+    if(status === "Open" && job.status !== "Suspended"){
+        throw{ status:400, message:"Only suspended jobs can be reopened"}
+    }
+    return jobRepository.updateStatus(jobId, status);
+}
+    public async deleteJob(jobId:number){
+        const job = await jobRepository.findByIdWithCounts(jobId);
+
+        if (!job) {
+            throw { status: 404, message: "Job not found" };
+        }
+
+const deletedApplications = job._count.applications;
+  const deletedSavedJobs = job._count.savedBy;
+
+  await jobRepository.deleteWithRelations(jobId);
+
+  return { deletedApplications, deletedSavedJobs };
+    }
+
+    public async getApplications(filters:{
+        search?: string;
+        status?:ApplicationStatus;
+        page?:number;
+        limit?:number;
+    }){
+        const [{applications, total},statusCounts] = await Promise.all([
+            applicationRepository.findAllForAdmin(filters),
+            applicationRepository.countByStatus()
+        ]);
+        const page = filters.page || 1;
+        const limit = filters.limit || 10;
+
+        return{applications,total,page,limit,totalPages:Math.ceil(total/limit),statusCounts};
     }
 }

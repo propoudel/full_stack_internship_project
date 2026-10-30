@@ -7,3 +7,7 @@ export const updateUserRoleSchema = z.object({
 export const updateUserStatusSchema = z.object({
   isActive: z.boolean(),
 });
+
+export const updateJobStatusSchema = z.object({
+  status: z.enum(["Open", "Suspended"]),
+});

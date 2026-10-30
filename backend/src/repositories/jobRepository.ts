@@ -85,16 +85,70 @@ export class JobRepository {
             where.experienceLevel = experienceLevel;
         }
 
-        const skip = (page-1)* limit;
-        const[jobs,total] = await Promise.all([
+        const skip = (page - 1) * limit;
+        const [jobs, total] = await Promise.all([
             prisma.job.findMany({
                 where,
-                orderBy:{[sortBy]:order},
+                orderBy: { [sortBy]: order },
                 skip,
-                take:limit,
+                take: limit,
             }),
-            prisma.job.count({where}),
+            prisma.job.count({ where }),
         ]);
-        return {jobs,total};
+        return { jobs, total };
+    }
+    public async findAllForAdmin(filters: {
+        search?: string;
+        status?: JobStatus;
+        page?: number;
+        limit?: number;
+    }) {
+        const { search, status, page = 1, limit = 10 } = filters;
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: "insensitive" } },
+                { location: { contains: search, mode: "insensitive" } },
+                { company: { name: { contains: search, mode: "insensitive" } } }
+            ]
+        }
+        if (status) where.status = status;
+        const [jobs, total] = await Promise.all([
+            prisma.job.findMany({
+                where,
+                orderBy: { createdAt: "desc" },
+                skip: (page - 1) * limit,
+                take: limit,
+                include: {
+                    company: { select: { id: true, name: true } },
+                    _count: { select: { applications: true, savedBy: true } },
+                },
+            }),
+            prisma.job.count({ where }),
+        ]);
+
+        return { jobs, total };
+    }
+
+    public async findByIdWithCounts(id: number) {
+        return prisma.job.findUnique({
+            where: { id },
+            include: {
+                company: { select: { id: true, name: true } },
+                _count: { select: { applications: true, savedBy: true } },
+            },
+        });
+    }
+
+    public async updateStatus(id: number, status: JobStatus): Promise<Job> {
+        return prisma.job.update({ where: { id }, data: { status } });
+    }
+
+    public async deleteWithRelations(id: number): Promise<void> {
+        await prisma.$transaction([
+            prisma.savedJob.deleteMany({ where: { jobId: id } }),
+            prisma.application.deleteMany({ where: { jobId: id } }),
+            prisma.job.delete({ where: { id } }),
+        ]);
     }
 }

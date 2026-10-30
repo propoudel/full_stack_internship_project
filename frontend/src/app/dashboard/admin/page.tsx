@@ -9,8 +9,8 @@ import api from "../../../lib/axios";
 const adminLinks = [
   { href: "/dashboard/admin/users", label: "Manage Users" },
   { href: "/dashboard/admin/companies", label: "Manage Companies" },
-  // { href: "/dashboard/admin/jobs", label: "Moderate Jobs" },
-  // { href: "/dashboard/admin/applications", label: "Applications Overview" },
+  { href: "/dashboard/admin/jobs", label: "Moderate Jobs" },
+  { href: "/dashboard/admin/applications", label: "Applications Overview" },
 ];
 
 export default function AdminDashboard() {
