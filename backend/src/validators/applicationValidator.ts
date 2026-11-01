@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 export const applyToJobSchema = z.object({
-  resumeUrl: z.url("Resume must be a valid URL"),
+  resumeUrl: z
+    .string()
+    .url("Resume must be a valid URL")
+    .refine((url) => /^https?:\/\//i.test(url), {
+      message: "Resume link must start with http:// or https://",
+    }),
   Experience: z.string().min(10, "Experience must be at least 10 characters").optional(),
 });
 

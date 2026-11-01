@@ -28,4 +28,5 @@ router.post("/:jobId/applications",authMiddleware,validate(applyToJobSchema),app
 router.get("/:jobId/applications",authMiddleware,applicationController.getApplicationsForJob);
 router.post("/:jobId/save",authMiddleware,savedJobController.saveJob);
 router.delete("/:jobId/save",authMiddleware,savedJobController.removeSavedJob);
+router.get("/me/jobs/:id", authMiddleware, jobController.getMyJobById);
 export default router;

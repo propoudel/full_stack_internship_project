@@ -25,43 +25,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const userRepository_1 = require("../repositories/userRepository");
-const jwtUtil_1 = require("../utils/jwtUtil");
-const refreshTokenRepository_1 = require("../repositories/refreshTokenRepository");
 const crypto_1 = __importDefault(require("crypto"));
+const userRepository_1 = require("../repositories/userRepository");
+const refreshTokenRepository_1 = require("../repositories/refreshTokenRepository");
+const jwtUtil_1 = require("../utils/jwtUtil");
 const emailUtils_1 = require("../utils/emailUtils");
 const userRepository = new userRepository_1.UserRepository();
 const refreshTokenRepository = new refreshTokenRepository_1.RefreshTokenRepository();
+// Strips every field that must never be sent to the client
+const toSafeUser = (user) => {
+    const { password, verificationToken, verificationTokenExpiry } = user, safeUser = __rest(user, ["password", "verificationToken", "verificationTokenExpiry"]);
+    return safeUser;
+};
+const VERIFICATION_TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000;
 class AuthService {
-    // handels new user registration
+    // Handles new user registration
     register(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
+            const verificationTokenExpiry = new Date(Date.now() + VERIFICATION_TOKEN_LIFETIME_MS);
             const existingUser = yield userRepository.findByEmail(data.email);
             if (existingUser) {
                 if (existingUser.isVerified) {
                     throw { status: 409, message: "Email already registered" };
                 }
-                //for existing email but not verified
-                const hashedPassword = yield bcrypt_1.default.hash(data.password, 10);
-                const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
-                const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-                const updatedUser = yield userRepository.update(existingUser.id, {
-                    name: data.name,
-                    password: hashedPassword,
-                    phone: data.phone,
+                // Email exists but was never verified. Keep the original name, phone and
+                // password (otherwise anyone could take over someone else's pending
+                // account), and only send a fresh verification link.
+                const refreshedUser = yield userRepository.update(existingUser.id, {
                     verificationToken,
                     verificationTokenExpiry,
                 });
-                yield (0, emailUtils_1.sendVerificationEmail)(updatedUser.email, updatedUser.name, verificationToken);
-                const { password, verificationToken: _vt, verificationTokenExpiry: _vte } = updatedUser, safeUser = __rest(updatedUser, ["password", "verificationToken", "verificationTokenExpiry"]);
-                return safeUser;
+                yield (0, emailUtils_1.sendVerificationEmail)(refreshedUser.email, refreshedUser.name, verificationToken);
+                return toSafeUser(refreshedUser);
             }
-            //Brand new email- normal registration flow
-            // hash password
+            // Brand new email
+            const existingPhone = yield userRepository.findByPhone(data.phone);
+            if (existingPhone) {
+                throw { status: 409, message: "Phone number already registered" };
+            }
             const hashedPassword = yield bcrypt_1.default.hash(data.password, 10);
-            //Generating ramdom verification code
-            const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
-            const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
             const user = yield userRepository.create({
                 name: data.name,
                 email: data.email,
@@ -72,10 +75,8 @@ class AuthService {
                 verificationToken,
                 verificationTokenExpiry,
             });
-            // sending verification email
             yield (0, emailUtils_1.sendVerificationEmail)(user.email, user.name, verificationToken);
-            const { password, verificationToken: _vt, verificationTokenExpiry: _vte } = user, safeUser = __rest(user, ["password", "verificationToken", "verificationTokenExpiry"]);
-            return safeUser;
+            return toSafeUser(user);
         });
     }
     getCurrentUser(userId) {
@@ -84,16 +85,13 @@ class AuthService {
             if (!user) {
                 throw { status: 404, message: "User not found" };
             }
-            const { password } = user, userWithoutPassword = __rest(user, ["password"]);
-            return userWithoutPassword;
+            return toSafeUser(user);
         });
     }
-    // verify email
+    // Verify email
     verifyEmail(token) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Received token:", token);
             const user = yield userRepository.findByVerificationToken(token);
-            console.log("Found user:", user);
             if (!user) {
                 throw { status: 400, message: "Invalid or expired verification link" };
             }
@@ -107,7 +105,7 @@ class AuthService {
             });
         });
     }
-    //refrence Token
+    // Exchange a refresh token for a new access token
     refreshAccessToken(refreshToken) {
         return __awaiter(this, void 0, void 0, function* () {
             const storedToken = yield refreshTokenRepository.findByToken(refreshToken);
@@ -122,34 +120,25 @@ class AuthService {
             if (!user) {
                 throw { status: 401, message: "User not found" };
             }
-            const newAccessToken = (0, jwtUtil_1.generateAccessToken)({
+            return (0, jwtUtil_1.generateAccessToken)({
                 id: user.id,
                 email: user.email,
                 role: user.role,
             });
-            return newAccessToken;
         });
     }
-    // login
     login(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            //find user by email
             const user = yield userRepository.findByEmail(data.email);
             if (!user) {
-                throw {
-                    status: 401,
-                    message: "Invalid email or password",
-                };
+                throw { status: 401, message: "Invalid email or password" };
             }
-            // check password with hashed password
             const isPasswordCorrect = yield bcrypt_1.default.compare(data.password, user.password);
             if (!isPasswordCorrect) {
-                throw {
-                    status: 401,
-                    message: "Invalid email or password"
-                };
+                throw { status: 401, message: "Invalid email or password" };
             }
-            //blocking email if not verified
+            // These two checks come after the password check on purpose, so someone who
+            // doesn't know the password can't learn the account's status
             if (!user.isVerified) {
                 throw {
                     status: 403,
@@ -158,10 +147,10 @@ class AuthService {
             }
             if (!user.isActive) {
                 throw {
-                    status: 401, message: "Your account has been deactivates.Please contact support."
+                    status: 403,
+                    message: "Your account has been deactivated. Please contact support.",
                 };
             }
-            // Generate Accesstoken
             const accessToken = (0, jwtUtil_1.generateAccessToken)({
                 id: user.id,
                 email: user.email,
@@ -174,16 +163,9 @@ class AuthService {
                 userId: user.id,
                 expiresAt,
             });
-            //remove password before returning
-            const { password, verificationToken, verificationTokenExpiry } = user, safeUser = __rest(user, ["password", "verificationToken", "verificationTokenExpiry"]);
-            return {
-                user: safeUser,
-                accessToken,
-                refreshToken,
-            };
+            return { user: toSafeUser(user), accessToken, refreshToken };
         });
     }
-    // logout
     logout(refreshToken) {
         return __awaiter(this, void 0, void 0, function* () {
             if (refreshToken) {

@@ -36,6 +36,11 @@ class UserRepository {
             return prisma_1.prisma.user.findUnique({ where: { id } });
         });
     }
+    findByPhone(phone) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return prisma_1.prisma.user.findUnique({ where: { phone } });
+        });
+    }
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             return prisma_1.prisma.user.findUnique({ where: { email } });

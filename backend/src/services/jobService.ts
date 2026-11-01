@@ -46,9 +46,25 @@ export class JobService {
 
     public async getJobById(id: number): Promise<Job> {
         const job = await jobRepository.findById(id);
-        if (!job) {
-            throw { status: 400, message: "Job not found" };
+
+        if (!job || job.status !== "Open") {
+            throw { status: 404, message: "Job not found" };
         }
+
+        return job;
+    }
+
+    public async getMyJobById(userId: number, jobId: number): Promise<Job> {
+        const job = await jobRepository.findById(jobId);
+        if (!job) {
+            throw { status: 404, message: "Job not found" };
+        }
+
+        const company = await companyRepository.findByOwnerId(userId);
+        if (!company || company.id !== job.companyId) {
+            throw { status: 403, message: "You do not have permission to view this job" };
+        }
+
         return job;
     }
 
@@ -92,11 +108,8 @@ export class JobService {
             };
         }
         const company = await companyRepository.findByOwnerId(userId);
-        if (!company) {
-            throw {
-                status: 403,
-                message: "You are not allowed to delete this job"
-            }
+        if (!company || company.id !== job.companyId) {  
+            throw { status: 403, message: "You do not have permission to delete this job" };
         }
         return jobRepository.delete(jobId);
     }

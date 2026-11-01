@@ -23,6 +23,9 @@ export class UserRepository {
     public async findById(id: number): Promise<User | null> {
         return prisma.user.findUnique({ where: { id } });
     }
+    public async findByPhone(phone: string): Promise<User | null> {
+        return prisma.user.findUnique({ where: { phone } });
+    }
 
     public async findByEmail(email: string): Promise<User | null> {
         return prisma.user.findUnique({ where: { email } });

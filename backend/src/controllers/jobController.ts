@@ -77,6 +77,18 @@ export class JobController {
             return res.status(status).json({ sucess: false, message });
         }
     }
+    // GET /jobs/me/jobs/:id
+    getMyJobById = async (req: AuthRequest, res: Response): Promise<Response> => {
+        try {
+            const userId = req.user!.id;
+            const job = await jobService.getMyJobById(userId, Number(req.params.id));
+            return res.status(200).json({ success: true, data: job });
+        } catch (error: any) {
+            const status = error.status || 500;
+            const message = error.message || "Something went wrong";
+            return res.status(status).json({ success: false, message });
+        }
+    };
     //Get jobs of me
 
     getMyJobs = async (req: AuthRequest, res: Response): Promise<Response> => {

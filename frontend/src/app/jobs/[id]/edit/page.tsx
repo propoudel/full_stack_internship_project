@@ -27,8 +27,7 @@ export default function EditJobPage() {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await api.get(`/jobs/${id}`);
-        const job = res.data.data;
+        const res = await api.get(`/jobs/me/jobs/${id}`); const job = res.data.data;
         setFormData({
           title: job.title,
           description: job.description,
