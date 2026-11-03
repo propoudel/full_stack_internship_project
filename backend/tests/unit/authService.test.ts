@@ -54,7 +54,7 @@ const makeUser = (overrides: Record<string, unknown> = {}): any => ({
   email: "test@example.com",
   password: "stored-hash",
   role: "User",
-  phone: "9800000000",
+  phone: "9843385688",
   isVerified: true,
   isActive: true,
   verificationToken: null,

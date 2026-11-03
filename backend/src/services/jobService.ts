@@ -98,7 +98,7 @@ export class JobService {
         return jobRepository.update(jobId, data)
     }
 
-    public async deleteJob(userId: number, jobId: number): Promise<Job> {
+    public async deleteJob(userId: number, jobId: number): Promise<void> {
         const job = await jobRepository.findById(jobId);
 
         if (!job) {
@@ -108,13 +108,23 @@ export class JobService {
             };
         }
         const company = await companyRepository.findByOwnerId(userId);
-        if (!company || company.id !== job.companyId) {  
+        if (!company || company.id !== job.companyId) {
             throw { status: 403, message: "You do not have permission to delete this job" };
         }
-        return jobRepository.delete(jobId);
+        // Applicants keep their history. Close the job instead of deleting it.
+        const applicationCount = (job as Job & { _count: { applications: number } })._count.applications;
+        if (applicationCount > 0) {
+            throw {
+                status: 409,
+                message: `This job has ${applicationCount} application(s) and cannot be deleted. Close it instead so applicants keep their history, or ask an administrator to remove it.`,
+            };
+        }
+
+        // Also removes the job's saved-job bookmarks
+        await jobRepository.deleteWithRelations(jobId);
     }
 
-    // to deactive the job 
+    // to deactivate the job 
     public async deactivateJob(userId: number, jobId: number): Promise<Job> {
         const job = await jobRepository.findById(jobId);
 

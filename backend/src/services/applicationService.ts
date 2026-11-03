@@ -12,7 +12,7 @@ export class ApplicationService {
     public async applyToJob(applicantId: number, jobId: number, data: ApplyToJobInput): Promise<Application> {
         const job = await jobRepository.findById(jobId);
         if (!job) {
-            throw { status: 402, message: "Job not found" };
+            throw { status: 404, message: "Job not found" };
         };
 
         if (job.status !== "Open") {
@@ -58,9 +58,9 @@ export class ApplicationService {
     }
 
     // user who applied, company owner, user who posted job can view applications applied for job
-    public async getApplicationById(userId: number, applicantId: number): Promise<Application> {
+    public async getApplicationById(userId: number, applicantionId: number): Promise<Application> {
 
-        const application = await applicationRepository.findById(applicantId);
+        const application = await applicationRepository.findById(applicantionId);
         if (!application) {
             throw { status: 404, message: "Application not found" };
         }
