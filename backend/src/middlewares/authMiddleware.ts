@@ -16,7 +16,7 @@ export const authMiddleware =(
     const token = req.cookies?.accessToken;
     if(!token){
         return res.status(401).json({
-            sucess:false,
+            success:false,
             message:"No token provided",
         });
     }
@@ -26,7 +26,7 @@ export const authMiddleware =(
         next();
     }catch(error){
         return res.status(401).json({
-            sucess:false,
+            success:false,
             message:"Invalid or expired token",
         });
     }
